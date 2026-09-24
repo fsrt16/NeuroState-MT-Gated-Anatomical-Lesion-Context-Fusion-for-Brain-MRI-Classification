@@ -1,0 +1,120 @@
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "fontFamily": "Arial",
+    "fontSize": "10.5px",
+    "lineWidth": "1.2px"
+  },
+  "flowchart": {
+    "htmlLabels": true,
+    "curve": "basis",
+    "nodeSpacing": 18,
+    "rankSpacing": 25,
+    "padding": 7
+  }
+}}%%
+
+flowchart TB
+
+    IN["<b>Input token sequence</b><br/>
+    Z̃ = {z<sub>1</sub>, z<sub>2</sub>, …, z<sub>L</sub>}<br/>
+    Z̃ ∈ ℝ<sup>L×D</sup>"]
+
+    IN --> EXP
+
+    EXP["<b>Input expansion</b><br/>
+    x<sub>t</sub> = W<sub>in</sub>z<sub>t</sub><br/>
+    D → rD"]
+
+    EXP --> SPLIT
+
+    SPLIT["Selective parameterization"]
+
+    SPLIT --> DELTA
+    SPLIT --> B
+    SPLIT --> C
+
+    DELTA["<b>Input-dependent step size</b><br/>
+    Δ<sub>t</sub> = f<sub>Δ</sub>(x<sub>t</sub>)"]
+
+    B["<b>Input-dependent input projection</b><br/>
+    B<sub>t</sub> = f<sub>B</sub>(x<sub>t</sub>)"]
+
+    C["<b>Input-dependent output projection</b><br/>
+    C<sub>t</sub> = f<sub>C</sub>(x<sub>t</sub>)"]
+
+    DELTA --> DISC
+    B --> DISC
+
+    DISC["<b>Discretization</b><br/>
+    Ā<sub>t</sub> = exp(Δ<sub>t</sub>A)<br/>
+    B̄<sub>t</sub> = ∫exp((Δ<sub>t</sub>−s)A)B<sub>t</sub>ds"]
+
+    DISC --> STATE
+
+    STATE["<b>Selective state transition</b><br/>
+    h<sub>t</sub> = Ā<sub>t</sub>h<sub>t−1</sub><br/>
+    + B̄<sub>t</sub>x<sub>t</sub>"]
+
+    STATE --> OUT
+    C --> OUT
+
+    OUT["<b>State-space output</b><br/>
+    y<sub>t</sub> = C<sub>t</sub>h<sub>t</sub> + Dx<sub>t</sub>"]
+
+    OUT --> GATE
+
+    GATE["<b>Neuro-gated modulation</b><br/>
+    g<sub>t</sub> = σ(W<sub>g</sub>[y<sub>t</sub>‖x<sub>t</sub>])"]
+
+    GATE --> MOD
+
+    OUT --> MOD
+
+    MOD["ỹ<sub>t</sub> = g<sub>t</sub> ⊙ y<sub>t</sub>
+    + (1−g<sub>t</sub>) ⊙ x<sub>t</sub>"]
+
+    MOD --> NORM
+
+    NORM["Residual connection<br/>
+    + normalization"]
+
+    NORM --> BLOCK
+
+    BLOCK["<b>One NeuroState SSM block</b>"]
+
+    BLOCK --> STACK
+
+    STACK["<b>Stacked sequence model</b><br/>
+    K<sub>s</sub> = 4 student blocks<br/>
+    K<sub>t</sub> = 5 teacher blocks"]
+
+    STACK --> POOL
+
+    POOL["Sequence aggregation<br/>
+    mean / designated classification token"]
+
+    POOL --> HEAD
+
+    HEAD["Classification representation<br/>
+    h ∈ ℝ<sup>D</sup>"]
+
+    HEAD --> LOGITS
+
+    LOGITS["Class logits<br/>
+    o = Wh + b"]
+
+    LOGITS --> SOFT
+
+    SOFT["p = softmax(o)<br/>
+    p ∈ ℝ<sup>C</sup>"]
+
+    SOFT --> CLS["Predicted tumor class"]
+
+    NOTE["<b>Key property</b><br/>
+    Selective parameters depend on the current token,<br/>
+    allowing the state transition to adapt to spatially<br/>
+    heterogeneous neuroanatomical patterns."]
+
+    DELTA -.-> NOTE
+    STATE -.-> NOTE
