@@ -1,0 +1,104 @@
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "fontFamily": "Arial",
+    "fontSize": "11px",
+    "lineWidth": "1.2px"
+  },
+  "flowchart": {
+    "htmlLabels": true,
+    "curve": "basis",
+    "nodeSpacing": 18,
+    "rankSpacing": 26,
+    "padding": 8
+  }
+}}%%
+
+flowchart TB
+
+    FL["<b>Local features</b><br/>
+    F<sub>L</sub> ∈ ℝ<sup>H′×W′×D</sup>"]
+
+    FG["<b>Global features</b><br/>
+    F<sub>G</sub> ∈ ℝ<sup>H′×W′×D</sup>"]
+
+    FL --> Q
+    FG --> K
+    FG --> V
+
+    Q["Query projection<br/>
+    Q = F<sub>L</sub>W<sub>Q</sub>"]
+
+    K["Key projection<br/>
+    K = F<sub>G</sub>W<sub>K</sub>"]
+
+    V["Value projection<br/>
+    V = F<sub>G</sub>W<sub>V</sub>"]
+
+    Q --> SCORE
+    K --> SCORE
+
+    SCORE["<b>Cross-attention affinity</b><br/>
+    S = QK<sup>T</sup>/√d"]
+
+    SCORE --> ATT
+
+    ATT["A = softmax(S)<br/>
+    cross-context attention map"]
+
+    ATT --> CTX
+    V --> CTX
+
+    CTX["Context aggregation<br/>
+    C = AV"]
+
+    FL --> GATE
+    FG --> GATE
+
+    GATE["<b>Neuro-gating function</b><br/>
+    G = σ(φ(F<sub>L</sub>, F<sub>G</sub>))"]
+
+    GATE --> FUSE
+    CTX --> FUSE
+    FL --> FUSE
+
+    FUSE["<b>Gated fusion</b><br/>
+    F = G ⊙ C + (1−G) ⊙ F<sub>L</sub>"]
+
+    FUSE --> PROJ
+
+    PROJ["Feature projection<br/>
+    F ∈ ℝ<sup>H′×W′×D</sup>"]
+
+    PROJ --> FLAT
+
+    FLAT["<b>Spatial flattening</b><br/>
+    H′×W′ → L"]
+
+    FLAT --> TOK
+
+    TOK["Z = reshape(F)<br/>
+    Z ∈ ℝ<sup>L×D</sup>"]
+
+    TOK --> POS
+
+    POS["<b>Relative positional encoding</b><br/>
+    Z̃ = Z + P<sub>rel</sub>"]
+
+    POS --> GRID
+
+    GRID["Spatial token sequence<br/>
+    L = 16×16 = 256<br/>
+    D = 256"]
+
+    GRID --> SSM
+
+    SSM["Forward to selective<br/>
+    state-space sequence model"]
+
+    NOTE["<b>Interpretation</b><br/>
+    Cross-attention establishes long-range<br/>
+    local–global correspondence, while G<br/>
+    adaptively controls information transfer."]
+    
+    FUSE -.-> NOTE
