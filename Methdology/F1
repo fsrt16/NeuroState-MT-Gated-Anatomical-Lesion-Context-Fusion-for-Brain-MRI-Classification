@@ -1,0 +1,92 @@
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "fontFamily": "Arial",
+    "fontSize": "11px",
+    "lineWidth": "1.2px"
+  },
+  "flowchart": {
+    "htmlLabels": true,
+    "curve": "basis",
+    "nodeSpacing": 20,
+    "rankSpacing": 28,
+    "padding": 8
+  }
+}}%%
+
+flowchart TB
+
+    X["<b>Normalized MRI</b><br/>
+    X ∈ ℝ<sup>224×224×C</sup>"]
+
+    X --> L
+    X --> G
+
+    subgraph LP["<b>Path I — Local NeuroContext Representation</b>"]
+        direction TB
+
+        L["Multiscale convolutional stem"]
+
+        L --> L1["Scale s<sub>1</sub><br/>
+        small receptive field"]
+
+        L --> L2["Scale s<sub>2</sub><br/>
+        intermediate receptive field"]
+
+        L --> L3["Scale s<sub>3</sub><br/>
+        large receptive field"]
+
+        L1 --> L4["Local texture<br/>
+        boundary response"]
+
+        L2 --> L5["Morphological<br/>
+        pattern response"]
+
+        L3 --> L6["Regional<br/>
+        contextual response"]
+
+        L4 --> LF
+        L5 --> LF
+        L6 --> LF
+
+        LF["Concatenate + 1×1 projection<br/>
+        F<sub>L</sub> = Ψ<sub>L</sub>([F<sub>1</sub>‖F<sub>2</sub>‖F<sub>3</sub>])"]
+    end
+
+    subgraph GP["<b>Path II — Global Anatomical Representation</b>"]
+        direction TB
+
+        G["DenseNet121<br/>
+        ImageNet initialization"]
+
+        G --> G1["Dense feature hierarchy"]
+
+        G1 --> G2["Transition layers"]
+
+        G2 --> G3["High-level semantic representation"]
+
+        G3 --> GF["Global feature tensor<br/>
+        F<sub>G</sub>"]
+    end
+
+    LF --> NORM
+    GF --> NORM
+
+    NORM["<b>Feature normalization</b><br/>
+    channel-wise projection to common embedding space"]
+
+    NORM --> COMP
+
+    COMP["<b>Complementary representation</b><br/>
+    Local texture + global anatomy"]
+
+    COMP --> FORM
+
+    FORM["F<sub>L</sub>, F<sub>G</sub> ∈ ℝ<sup>H′×W′×D</sup>"]
+
+    FORM --> NOTE["<b>Design principle</b><br/>
+    local branch preserves fine tumor morphology;<br/>
+    global branch supplies anatomical context"]
+
+    NOTE --> NEXT["Forward to NeuroGated<br/>
+    Cross-Attention Fusion"]
